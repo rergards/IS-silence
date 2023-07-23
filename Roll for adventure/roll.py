@@ -55,16 +55,26 @@ def main():
     for sides, quantity in dice_to_roll.items():
         results = []
         headers = []
-        for _ in range(quantity):
-            roll = roll_die(int(sides))
-            if sides == '30':
-                filename = random.choice(filenames[sides])
-            else:
+        if sides == '30':
+            files = filenames[sides]
+            if quantity > len(files):
+                print(f'Error: Quantity for {sides}-sided dice is more than available files.')
+                continue
+            for i in range(quantity):
+                roll = roll_die(int(sides))
+                filename = files[i]
+                header, line = get_line_from_file(filename, roll)
+                headers.append(header)
+                results.append(line)
+                output.append(f'Rolled a {sides} sided die, result: {roll}')
+        else:
+            for _ in range(quantity):
+                roll = roll_die(int(sides))
                 filename = filenames[sides]
-            header, line = get_line_from_file(filename, roll)
-            headers.append(header)
-            results.append(line)
-            output.append(f'Rolled a {sides} sided die, result: {roll}')
+                header, line = get_line_from_file(filename, roll)
+                headers.append(header)
+                results.append(line)
+                output.append(f'Rolled a {sides} sided die, result: {roll}')
         if sides == '100':
             output.append(f"{headers[0]}: {', '.join(results)}")
         else:
