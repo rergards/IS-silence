@@ -2,7 +2,9 @@ import argparse
 import random
 import os
 import base64
-import os
+import binascii
+import logging
+
 try:
     import tkinter as tk
 except ImportError:
@@ -14,13 +16,19 @@ def roll_die(sides):
 def get_line_from_file(filename, line_num, encoded):
     script_dir = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(script_dir, "tables", filename)
-    with open(path, 'r') as file:
-        if encoded:
-            content = base64.b64decode(file.read()).decode('utf-8')
-            lines = content.split('\n')
-        else:
-            lines = file.readlines()
+    try:
+        with open(path, 'rb') as file:
+            content = file.read()
+        try:
+            content = base64.b64decode(content).decode('utf-8')
+        except (binascii.Error, UnicodeDecodeError):
+            content = content.decode('utf-8')
+
+        lines = content.split('\n')
         return lines[0], lines[line_num].strip()  # returning header and the line
+    except Exception as e:
+        logging.error(f"An error occurred while trying to read from file {filename}: {e}")
+        raise
 
 def main(encoded):
     dice_to_roll = {
