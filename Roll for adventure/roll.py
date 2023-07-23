@@ -11,26 +11,36 @@ except ImportError:
     tk = None
 
 def roll_die(sides):
+    """Roll a die with the given number of sides and return the result."""
     return random.randint(1, sides)
 
-def get_line_from_file(filename, line_num, encoded):
+def get_line_from_file(filename, line_num):
+    """
+    Get the specified line from the file.
+
+    If the file is base64 encoded, it is decoded first.
+    If it's not base64, it is read as it is.
+    """
     script_dir = os.path.dirname(os.path.realpath(__file__))
     path = os.path.join(script_dir, "tables", filename)
     try:
         with open(path, 'rb') as file:
             content = file.read()
-        try:
-            content = base64.b64decode(content).decode('utf-8')
-        except (binascii.Error, UnicodeDecodeError):
-            content = content.decode('utf-8')
-
-        lines = content.split('\n')
-        return lines[0], lines[line_num].strip()  # returning header and the line
+            try:
+                # Try to decode as base64
+                content = base64.b64decode(content).decode('utf-8')
+            except (binascii.Error, UnicodeDecodeError):
+                # If it fails, it's not base64, so decode as plain text
+                content = content.decode('utf-8')
     except Exception as e:
         logging.error(f"An error occurred while trying to read from file {filename}: {e}")
         raise
 
-def main(encoded):
+    lines = content.split('\n')
+    return lines[0], lines[line_num].strip()  # returning header and the line
+
+def main():
+    """Main function that performs the dice rolls and prints the results."""
     dice_to_roll = {
         '100': 4,
         '30': 3,
@@ -51,7 +61,7 @@ def main(encoded):
                 filename = random.choice(filenames[sides])
             else:
                 filename = filenames[sides]
-            header, line = get_line_from_file(filename, roll, encoded)
+            header, line = get_line_from_file(filename, roll)
             headers.append(header)
             results.append(line)
             output.append(f'Rolled a {sides} sided die, result: {roll}')
@@ -72,7 +82,4 @@ def main(encoded):
         print(output_str)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--encoded", help="Specify if files are base64 encoded", action="store_true")
-    args = parser.parse_args()
-    main(args.encoded)
+    main()
